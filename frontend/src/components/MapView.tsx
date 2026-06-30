@@ -1,69 +1,37 @@
-import {MapContainer, Marker, Popup, TileLayer, AttributionControl, useMapEvents, Tooltip} from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import 'react-leaflet-cluster/dist/assets/MarkerCluster.css'
-import 'react-leaflet-cluster/dist/assets/MarkerCluster.Default.css'
-import "./MapView.css";
-import MarkerPin from "../assets/location-pin.png";
-import MyLocation from "../assets/my-location.png";
-import {Icon, divIcon, point, type LatLngTuple} from "leaflet";
+import { useEffect, useRef, useState, type KeyboardEvent, type RefObject } from "react";
+
+import { divIcon, point, type Map as LeafletMap, type MarkerCluster } from "leaflet";
+import {
+    AttributionControl,
+    MapContainer,
+    TileLayer,
+    useMapEvents,
+} from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
-import type {MarkerCluster, Map as LeafletMap} from "leaflet";
-import {useState, useRef, useEffect, type RefObject, type KeyboardEvent} from "react";
 
+import "leaflet/dist/leaflet.css";
+import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
+import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
 
-const markers: { id: number; position: LatLngTuple; title: string; text: string }[] = [
-    {
-        id: 1,
-        position: [51.5113, 7.4636],
-        title: "Hövels Hausbrauerei",
-        text: "Traditionelle Brauereigaststätte mit eigenem Bier am Hoher Wall.",
-    },
-    {
-        id: 2,
-        position: [51.5136, 7.4659],
-        title: "Pfefferkorn am Alten Markt",
-        text: "Rustikale deutsche Küche direkt am historischen Marktplatz.",
-    },
-    {
-        id: 4,
-        position: [51.5130, 7.4675],
-        title: "Mongo's",
-        text: "Mongolisches Barbecue-Buffet nahe der Kleppingstraße.",
-    },
-    {
-        id: 5,
-        position: [51.5145, 7.4625],
-        title: "Vapiano",
-        text: "Italienische Pasta und Pizza nahe dem Westenhellweg.",
-    },
-];
+import "./MapView.css";
 
-const INITIAL_CENTER: LatLngTuple = [51.5142273, 7.4652789];
-const INITIAL_ZOOM = 15;
+import MyLocation from "../assets/my-location.png";
 
-// Possible to use custom Markers:
-const customIcon = new Icon({
-    iconUrl: MarkerPin,
-    iconSize: [38, 38]
-})
-const OSM = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
-const SATELLITE = '&copy; CNES, Airbus DS, PlanetObserver, OpenMapTiles | &copy; <a href="https://stadiamaps.com/">Stadia Maps</a>';
+import { MyLocationMarker } from "./MyLocationMarker/MyLocationMarker.tsx";
+import { RestaurantMarker } from "./RestaurantMarker/RestaurantMarker.tsx";
+import { SearchRestaurantsButton } from "./SearchRestaurantsButton/SearchRestaurantsButton.tsx";
+import SettingsButton from "./SettingsButton/SettingsButton.tsx";
 
-// Beide Kachel-Sätze sind immer sichtbar (große Map + Preview) → beide Credits dauerhaft zeigen
-const COMBINED_ATTRIBUTION = `${OSM} | ${SATELLITE}`;
+import {
+    COMBINED_ATTRIBUTION,
+    INITIAL_CENTER,
+    INITIAL_ZOOM,
+    skins,
+} from "../constants/constants.ts";
 
-const skins = [
-    {
-        id: 1,
-        name: "Standard",
-        url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-    },
-    {
-        id: 2,
-        name: "Satellit",
-        url: "https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.jpg",
-    }
-]
+import type { RestaurantFeature, RestaurantResponse } from "../types/restaurant.type.ts";
+import type { Position } from "../types/position.type.ts";
+import type { Settings } from "../types/settings.type.ts";
 
 // Eine reine Verhaltenskomponente (return null)
 function SyncPreview({previewRef}: { previewRef: RefObject<LeafletMap | null> }) {
@@ -85,6 +53,13 @@ export default function MapView() {
     const [mainSkin, setMainSkin] = useState<0 | 1>(0);
     const secondSkin = mainSkin === 0 ? 1 : 0;
     const mapRef = useRef<LeafletMap | null>(null);
+    const [currentPosition, setCurrentPosition] = useState<Position>({
+        lat: INITIAL_CENTER[0],
+        lng: INITIAL_CENTER[1],
+    });
+    const [restaurants, setRestaurants] = useState<RestaurantFeature[]>([]);
+    const [radius, setRadius] = useState<number>(1000);
+    const [limit, setLimit] = useState<number>(10);
     const previewMapRef = useRef<LeafletMap | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -95,10 +70,27 @@ export default function MapView() {
         return () => clearTimeout(timer);
     }, [errorMessage]);
 
+    useEffect(() => {
+        goToMyLocation();
+    }, []);
+
     function goToMyLocation() {
         navigator.geolocation.getCurrentPosition(
-            position => mapRef.current?.flyTo([position.coords.latitude, position.coords.longitude], 15),
-            () => setErrorMessage("Standort nicht verfügbar. Bitte die Freigabe im Browser prüfen.")
+            (position) => {
+                const location = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude,
+                };
+
+                setCurrentPosition(location);
+
+                mapRef.current?.flyTo([location.lat, location.lng], 15);
+            },
+            () => {
+                setErrorMessage(
+                    "Standort nicht verfügbar. Bitte die Freigabe im Browser prüfen."
+                );
+            }
         );
     }
 
@@ -113,15 +105,40 @@ export default function MapView() {
         }
     }
 
+    function handleSettings(settings: Settings): void {
+        setRadius(settings.radius);
+        setLimit(settings.limit);
+    }
 
     return (
         <div className={"map-wrapper"}>
-            <>
-                <button onClick={goToMyLocation} className={"actual-button"} aria-label={"Zu meinem Standort springen"}>
-                    <img src={MyLocation} alt={""}/>
+            <div className="map-button-group">
+                <button
+                    onClick={goToMyLocation}
+                    className={"map-button"}
+                    aria-label={"Zu meinem Standort springen"}
+                >
+                    <img src={MyLocation} alt={""} />
                 </button>
-            </>
+
+                {currentPosition && (
+                    <SearchRestaurantsButton
+                        lat={currentPosition.lat.toString()}
+                        lng={currentPosition.lng.toString()}
+                        radius={radius}
+                        limit={limit}
+                        onResult={(data: RestaurantResponse) => {
+                            setRestaurants(data.features)
+                        }}
+                        onError={setErrorMessage}
+                    />
+                )}
+
+                <SettingsButton settings={{radius, limit}} onSave={(settings: Settings) => handleSettings(settings)}/>
+            </div>
+
             {errorMessage && <p className={"error-message"} role={"alert"}>{errorMessage}</p>}
+
             <MapContainer id={"map"} ref={mapRef} center={INITIAL_CENTER} zoom={INITIAL_ZOOM}
                           attributionControl={false}>
                 <AttributionControl prefix={"ⓘ"}/>
@@ -140,27 +157,20 @@ export default function MapView() {
                     }}
                 />
 
+                {restaurants.length > 0 ? <MarkerClusterGroup chunkedLoading iconCreateFunction={createClusterIcon}>
+                    {restaurants.map(restaurant => (
+                        <RestaurantMarker
+                            key={restaurant.properties.place_id}
+                            restaurant={restaurant}
+                        />
+                    ))}
+                </MarkerClusterGroup> : null}
 
-                <MarkerClusterGroup chunkedLoading
-                                    iconCreateFunction={createClusterIcon}>
-                    {markers.map(marker => <Marker
-                        key={marker.id}
-                        position={marker.position}
-                        icon={customIcon}
-                    >
-                        <Tooltip permanent offset={[0, -20]} direction={"top"} interactive>
-                            {marker.title}
-                        </Tooltip>
-                        <Popup>
-                            <h2>{marker.title}</h2>
-                            <p>{marker.text}</p>
-                        </Popup>
-                    </Marker>)
-                    }
-
-                </MarkerClusterGroup>
-
+                {currentPosition && (
+                    <MyLocationMarker lat={currentPosition.lat} lng={currentPosition.lng}/>
+                )}
             </MapContainer>
+
             <div className={"skin-button"}
                  role={"button"}
                  tabIndex={0}
@@ -169,7 +179,7 @@ export default function MapView() {
                  onKeyDown={handleSkinButtonKeyDown}>
                 <MapContainer id={"preview-map"}
                               ref={previewMapRef}
-                              center={INITIAL_CENTER}
+                              center={currentPosition}
                               zoom={INITIAL_ZOOM - 4}
                               attributionControl={false}
                               zoomControl={false}

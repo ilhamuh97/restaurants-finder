@@ -38,12 +38,9 @@
 
 }
 
-.actual-button {
+
+.map-button {
     all: unset;
-    position: absolute;
-    z-index: 1000;
-    top: 15px;
-    right: 15px;
     width: 40px;
     height: 40px;
     background-color: white;
@@ -52,11 +49,33 @@
     justify-content: center;
     align-items: center;
     cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+
+    position: relative;
+    z-index: 1000;
 
     & img {
-        width: 30px;
-        height: 30px;
+        width: 24px;
+        height: 24px;
     }
+
+    &:hover {
+        transform: scale(1.05);
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+}
+
+.map-button-group {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 1000;
 }
 
 .skin-button {
