@@ -1,4 +1,4 @@
 export type Settings = {
-    radius: string;
+    radius: number;
     limit: number;
 };

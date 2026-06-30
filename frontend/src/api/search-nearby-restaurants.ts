@@ -1,11 +1,11 @@
 import { api } from "./axios";
 import type { AxiosResponse } from "axios";
-import type {Restaurant, RestaurantResponse} from "../types/restaurant.type";
+import type {RestaurantResponse} from "../types/restaurant.type";
 
 type SearchNearbyParams = {
     lat: string;
     lng: string;
-    radius: string;
+    radius: number;
     limit: number;
 };
 

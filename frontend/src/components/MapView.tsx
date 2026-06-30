@@ -1,22 +1,37 @@
-import {MapContainer, TileLayer, AttributionControl, useMapEvents} from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import 'react-leaflet-cluster/dist/assets/MarkerCluster.css'
-import 'react-leaflet-cluster/dist/assets/MarkerCluster.Default.css'
-import "./MapView.css";
-import MyLocation from "../assets/my-location.png";
-import {Icon, divIcon, point, type LatLngTuple} from "leaflet";
+import { useEffect, useRef, useState, type KeyboardEvent, type RefObject } from "react";
+
+import { divIcon, point, type Map as LeafletMap, type MarkerCluster } from "leaflet";
+import {
+    AttributionControl,
+    MapContainer,
+    TileLayer,
+    useMapEvents,
+} from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
-import type {MarkerCluster, Map as LeafletMap} from "leaflet";
-import {useState, useRef, useEffect, type RefObject, type KeyboardEvent} from "react";
-import {searchNearbyRestaurants} from "../api/search-nearby-restaurants.ts";
-import {SearchRestaurantsButton} from "./SearchRestaurantsButton/SearchRestaurantsButton.tsx";
-import type {RestaurantResponse, RestaurantFeature} from "../types/restaurant.type.ts";
-import {RestaurantMarker} from "./RestaurantMarker/RestaurantMarker.tsx";
-import {MyLocationMarker} from "./MyLocationMarker/MyLocationMarker.tsx";
-import {INITIAL_CENTER, INITIAL_ZOOM, skins, COMBINED_ATTRIBUTION} from "../constants/constants.ts"
-import type {Position} from "../types/position.type.ts"
-import SettingsButton from "./SettingsButton/SettingsButton.tsx"
-import type {Settings} from "../types/settings.type.ts"
+
+import "leaflet/dist/leaflet.css";
+import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
+import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
+
+import "./MapView.css";
+
+import MyLocation from "../assets/my-location.png";
+
+import { MyLocationMarker } from "./MyLocationMarker/MyLocationMarker.tsx";
+import { RestaurantMarker } from "./RestaurantMarker/RestaurantMarker.tsx";
+import { SearchRestaurantsButton } from "./SearchRestaurantsButton/SearchRestaurantsButton.tsx";
+import SettingsButton from "./SettingsButton/SettingsButton.tsx";
+
+import {
+    COMBINED_ATTRIBUTION,
+    INITIAL_CENTER,
+    INITIAL_ZOOM,
+    skins,
+} from "../constants/constants.ts";
+
+import type { RestaurantFeature, RestaurantResponse } from "../types/restaurant.type.ts";
+import type { Position } from "../types/position.type.ts";
+import type { Settings } from "../types/settings.type.ts";
 
 // Eine reine Verhaltenskomponente (return null)
 function SyncPreview({previewRef}: { previewRef: RefObject<LeafletMap | null> }) {
@@ -38,11 +53,11 @@ export default function MapView() {
     const [mainSkin, setMainSkin] = useState<0 | 1>(0);
     const secondSkin = mainSkin === 0 ? 1 : 0;
     const mapRef = useRef<LeafletMap | null>(null);
-    const [currentPosition, setCurrentPosition] = useState<Position | null>({
+    const [currentPosition, setCurrentPosition] = useState<Position>({
         lat: INITIAL_CENTER[0],
         lng: INITIAL_CENTER[1],
     });
-    const [restaurants, setRestaurants] = useState<RestaurantFeature[] | null>([]);
+    const [restaurants, setRestaurants] = useState<RestaurantFeature[]>([]);
     const [radius, setRadius] = useState<number>(1000);
     const [limit, setLimit] = useState<number>(10);
     const previewMapRef = useRef<LeafletMap | null>(null);
@@ -90,7 +105,7 @@ export default function MapView() {
         }
     }
 
-    function handleSettings(settings): void {
+    function handleSettings(settings: Settings): void {
         setRadius(settings.radius);
         setLimit(settings.limit);
     }
@@ -113,8 +128,7 @@ export default function MapView() {
                         radius={radius}
                         limit={limit}
                         onResult={(data: RestaurantResponse) => {
-                            setRestaurants((prev: RestaurantFeature[]): RestaurantFeature[] => data.features)
-                            console.log("Restaurants:", data);
+                            setRestaurants(data.features)
                         }}
                         onError={setErrorMessage}
                     />
