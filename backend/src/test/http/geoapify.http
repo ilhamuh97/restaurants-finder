@@ -1,0 +1,2 @@
+### Get locations form lng, lat within radius with limit
+GET {{localhost}}:{{port}}/api/search?lng=9.993470&lat=53.702139&radius=1000&limit=20
