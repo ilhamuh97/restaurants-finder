@@ -197,7 +197,7 @@ export default function MapView() {
 
             <div className={"skin-button"}
                  role={"button"}
-                 tabIndex={0}4
+                 tabIndex={0}
                  aria-label={"Zwischen Karten- und Satellitenansicht wechseln"}
                  onClick={toggleSkin}
                  onKeyDown={handleSkinButtonKeyDown}>
