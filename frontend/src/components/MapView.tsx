@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState, type KeyboardEvent, type RefObject} from "react";
+import {useEffect, useRef, useState, type RefObject} from "react";
 
 import {divIcon, point, type Map as LeafletMap, type MarkerCluster} from "leaflet";
 import {
@@ -108,13 +108,6 @@ export default function MapView() {
         setMainSkin(prev => prev === 0 ? 1 : 0)
     }
 
-    function handleSkinButtonKeyDown(event: KeyboardEvent) {
-        if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault()
-            toggleSkin()
-        }
-    }
-
     async function handleFindRestaurants() {
         const map = mapRef.current;
         if (!map) {
@@ -195,12 +188,13 @@ export default function MapView() {
                 )}
             </MapContainer>
 
-            <div className={"skin-button"}
-                 role={"button"}
-                 tabIndex={0}
-                 aria-label={"Zwischen Karten- und Satellitenansicht wechseln"}
-                 onClick={toggleSkin}
-                 onKeyDown={handleSkinButtonKeyDown}>
+            <div className={"skin-button"}>
+                <button
+                    type={"button"}
+                    className={"skin-button__toggle"}
+                    aria-label={"Zwischen Karten- und Satellitenansicht wechseln"}
+                    onClick={toggleSkin}
+                />
                 <MapContainer id={"preview-map"}
                               ref={previewMapRef}
                               center={currentPosition}
