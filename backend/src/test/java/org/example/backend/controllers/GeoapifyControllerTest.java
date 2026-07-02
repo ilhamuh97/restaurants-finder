@@ -99,12 +99,12 @@ class GeoapifyControllerTest {
     }
 
     @Test
-    void search_shouldReturnBadRequestWhenLimitIsMissing() throws Exception {
+    void search_shouldReturn200WhenLimitIsMissing() throws Exception {
         mockMvc.perform(get("/api/search")
                         .param("lat", "52.5200")
                         .param("lng", "13.4050")
                         .param("radius", "5000"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isOk());
     }
 
     @Test

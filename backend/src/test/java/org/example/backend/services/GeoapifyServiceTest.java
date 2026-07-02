@@ -56,7 +56,6 @@ class GeoapifyServiceTest {
         geoapifyMockServer.expect(requestTo(GEOAPIFY_BASE_URL + "/places" +
                         "?categories=catering.restaurant" +
                         "&filter=circle:" + lng + "," + lat + "," + radius +
-                        "&bias=proximity:" + lng + "," + lat +
                         "&limit=" + limit +
                         "&apiKey=" + TEST_API_KEY))
                 .andExpect(method(HttpMethod.GET))
@@ -81,11 +80,12 @@ class GeoapifyServiceTest {
                 }
                 """;
 
-        autocompleteMockServer.expect(requestTo(AUTOCOMPLETE_BASE_URL + "/autocomplete" +
-                        "?text=" + query +
-                        "&limit=3" +
-                        "&format=json" +
-                        "&apiKey=" + TEST_API_KEY))
+        autocompleteMockServer.expect(requestTo(
+                        AUTOCOMPLETE_BASE_URL + "/autocomplete" +
+                                "?text=" + query +
+                                "&limit=3" +
+                                "&format=json" +
+                                "&apiKey=" + TEST_API_KEY))
                 .andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess(mockJsonResponse, MediaType.APPLICATION_JSON));
 
