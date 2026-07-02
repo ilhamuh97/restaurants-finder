@@ -28,7 +28,7 @@
     </scm>
     <properties>
         <java.version>25</java.version>
-        <sonar.organization>bjoern64234</sonar.organization>
+        <sonar.organization>ilhamuh97</sonar.organization>
     </properties>
     <dependencies>
         <dependency>
