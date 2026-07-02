@@ -5,8 +5,7 @@ import type {RestaurantResponse} from "../types/restaurant.type";
 type SearchNearbyParams = {
     lat: string,
     lng: string,
-    radius: string,
-    limit: number;
+    radius: string
 };
 
 export const searchNearbyRestaurants = (
