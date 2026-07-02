@@ -11,6 +11,7 @@ public class GeoapifyService {
     @Value("${GEOAPIFY_API_KEY}")
     private String apiKey;
     private final RestClient geoapifyRestClient;
+    private static final int DEFAULT_LIMIT = 200;
 
     public GeoapifyService(RestClient geoapifyRestClient) {
         this.geoapifyRestClient = geoapifyRestClient;
@@ -23,8 +24,8 @@ public class GeoapifyService {
                         .queryParam("categories", "catering.restaurant")
                         .queryParam("filter",
                                 "circle:" + lng + "," + lat + "," + radius)
-//                        .queryParam("bias", "proximity:" + lng + "," + lat)
-                        .queryParam("limit", limit)
+                        .queryParam("limit",
+                                limit != null ? limit : DEFAULT_LIMIT)
                         .queryParam("apiKey", apiKey)
                         .build())
                 .retrieve()
