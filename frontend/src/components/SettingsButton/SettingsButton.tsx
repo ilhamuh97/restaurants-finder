@@ -47,7 +47,7 @@ export default function SettingsButton({ settings, onSave }: Props): ReactElemen
                                     id="radius-input"
                                     type="number"
                                     value={radius}
-                                    onChange={e => setRadius(e.target.value)}
+                                    onChange={e => setRadius(Number(e.target.value))}
                                     min="100"
                                     max="50000"
                                     step="100"
